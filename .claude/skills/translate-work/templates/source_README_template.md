@@ -46,7 +46,7 @@ further full pass yields no substantive change. **Translation is a later project
 2. **{Base} page images**: the ground truth for every correction.
 3. **{Secondary witness}** ({Migne / Lommatzsch / Cramer / …}, PD): independent editorial line, used at R1.
 4. **English oracle**: {Translator, *Title* (Series, Year)}, **copyright: consult, never copy.**
-   Staged as `oracle_{name}_en.pdf` (git-ignored). Used at R3 (and for grading the English later).
+   Staged as `oracle/oracle.pdf` (git-ignored). Used at R3 (and for grading the English later).
 5. {Extra apparatus / notes (PD) for R6, if any.}
 
 ### Passes to execute

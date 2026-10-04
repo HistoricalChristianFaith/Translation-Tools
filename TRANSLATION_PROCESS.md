@@ -3,6 +3,8 @@
 This document describes the workflow used to produce fresh, public-domain English translations of
 five works of Origen of Alexandria (August–September 2026). Earlier works (Judges, Isaiah, Luke)
 used earlier, less developed versions of the same workflow; these five are where it settled.
+Since then the `/translate-work` skill has run further works (Jerome's *Commentary on Galatians*
+among them) and added three source-text phases: normalize, R8 and convergence (§5.1).
 
 | Work | Survives as | Base text | Units |
 |---|---|---|---|
@@ -37,10 +39,10 @@ the easy part.
 | `tools/` | (symlink into the skill) Generic, config-driven tools: `translate.py`, `validate.py`, `grade.py` (they prepare the bundles the skill's translate / validate / grade subagents work from, and check what those agents write; they never call a model), plus base-text helpers `base_check.py` and `strip_anchors.py` |
 | `tools/work_config_template.py` | Commented template for a new work's config |
 | `examples/configs/` | Configs of the Leviticus and 1 Corinthians runs (settings reference for `tools/`) |
-| `examples/original-scripts/` | Verbatim snapshots of the per-work scripts actually used (Leviticus, 1 Corinthians), plus some per-project base-text helpers |
+| `examples/original-scripts/` | Snapshots of the per-work scripts actually used (Leviticus, 1 Corinthians), plus some per-project base-text helpers; only the oracle file paths were made generic |
 | `examples/pass-prompts/` | Real prompts and subagent briefs used for base-text passes B, R1, R2, R3 and R4 |
 | `examples/source-workspace/` | Two real `_source/README.md` planning docs and two pass reports |
-| `templates/` | Skeletons for a new work's `_source/README.md` and for a pass prompt |
+| `templates/` | Skeletons for a new work's `_source/README.md` (a link to the skill's template) and for a pass prompt |
 
 ---
 
@@ -75,6 +77,11 @@ the easy part.
 
 ## 2. Layout: repositories and folders
 
+This is the layout of the five hand-run works. The skill keeps the same three top-level folders,
+but organizes `_source/` differently (`pages/`, `ocr/`, `oracle/`, `run/`; see the skill's
+[README](.claude/skills/translate-work/README.md#workspace-a-run-creates)) and needs no
+`Scripts/` repository.
+
 ```
 Writings-Database-Non-English/<Author>/<Work>/     source-language repo (GitHub: HistoricalChristianFaith)
 ├── LATIN/ or GREEK/        the verified base text, one file per unit    (git-tracked)
@@ -83,7 +90,7 @@ Writings-Database-Non-English/<Author>/<Work>/     source-language repo (GitHub:
     ├── README.md           project plan: witnesses, passes, conventions, status
     ├── <edition>_pages/    rendered page images (the ground truth)
     ├── *_djvu.txt, page_numbers.json, scandata.xml   OCR + page→leaf maps
-    ├── oracle_<name>.pdf   copyright English translation (local only)
+    ├── oracle/oracle.pdf   copyright English translation (local only)
     ├── passB_final/        mirror of the running text (Latin projects)
     ├── pass*_prompt.md     the prompt used for each pass
     ├── <pass>_report.md    one report per pass (boundary_audit, recollation_pass, variants_*,
@@ -131,8 +138,8 @@ LEMMA: [Ἡμεῖς δὲ οὐ τὸ πνεῦμα τοῦ κόσμου ἐλ�
   `claude-opus-5-5`). The per-work scripts in `examples/original-scripts/` ran these phases
   headlessly, one `claude -p` call per unit; that is the method described in §§6–8, which the
   skill keeps.
-- Python 3 with Pillow (crops, image conversion). PyMuPDF helps with oracle extraction.
-- poppler (`pdftotext`, `pdftoppm`), OpenJPEG (`opj_decompress`), tesseract (optional, rough OCR
+- Python 3 with Pillow (crops, image conversion).
+- poppler (`pdftotext`, `pdftoppm`; also extracts the oracle's text), OpenJPEG (`opj_decompress`), tesseract (optional, rough OCR
   seeds only).
 - git for every tracked tree.
 
@@ -173,8 +180,8 @@ Then stage (Pass 0):
   boundaries and section numbers), never text.
 - **Boundaries verified on the images.** First incipit, last explicit, every seam between
   volumes, issues or parts.
-- **The oracle PDF**, dropped in manually as `oracle_<translator>_<series>.pdf`. It is copyright
-  and stays git-ignored.
+- **The oracle PDF**, dropped in manually as `oracle/oracle.pdf` (the skill takes it from
+  `_source/incoming/oracle/` and moves it there). It is copyright and stays git-ignored.
 
 Record source quirks durably (wrong archive items, offset glitches). Several items listed in
 project notes turned out to be undownloadable; a working substitute had to be found and written
@@ -186,11 +193,14 @@ down.
 
 ### 5.1 The passes
 
-Order as settled: **A → B → R2 → R4 → R1 → R3 → R5 → R6 → R7**.
+Order as settled: **A → normalize → B → R2 → R4 → R1 → R3 → R5 → R6 → R8 → convergence → R7**.
+The five Origen works ran A → B → R2 → R4 → R1 → R3 → R5 → R6 → R7. The skill added normalize, R8
+and convergence afterwards.
 
 | Pass | Purpose | Lens (detector) | Arbiter | Report |
 |---|---|---|---|---|
 | **A** Extract & structure | Split the OCR into units; build the manifest (unit → passage → pages → anchors); scaffold headers | OCR | image | `passA_report.md`, `boundary_audit.md`, manifest |
+| **normalize** Seed clean-up | Only when B seeds from a usable text layer or OCR. A script makes the mechanical fixes once (code-point variants, stray combining marks, settled mark conversions, whitespace), so B starts from clean text and B's own changes stay auditable. Visible letters are never changed by script | — | script, then B | `run/normalize_notes.md` |
 | **B** Image transcription | Transcribe every unit directly from the page images, with `[p.N]` anchors at every page or column turn | — | image | `passB_report.md` |
 | **R2** Lensless re-collation | A fresh reader re-reads *everything* word for word against the images, with no other witness open | none | image | `recollation_pass.md` |
 | **R4** Boundary & completeness | Every unit's start and end, shared pages, seams, every page anchored once, section numerals | (oracle as tripwire only) | image | `r4_boundary_audit.md` |
@@ -198,11 +208,14 @@ Order as settled: **A → B → R2 → R4 → R1 → R3 → R5 → R6 → R7**.
 | **R3** Oracle back-check | Sentence by sentence against the English oracle, looking for meaning-level slips | oracle translation | image | `oracle_discrepancies.md` |
 | **R5** Consistency & conventions | Single-editor uniformity: orthography as printed, marks, anchors, lemma per unit, embedded Greek; build the unit → passage table | — | image | `consistency_pass.md` |
 | **R6** Apparatus / variant pass | A narrow pass over the residual cruxes: emend or record | apparatus, witness, corpus | image + evidence | `apparatus_pass.md` |
+| **R8** Doubt resolution | Every doubt still open after R6 checked against every other source the run has (a digitized manuscript, other editions, the oracle as detector). The editor's choices are kept; only demonstrable transcription errors change | other sources | image + evidence | `doubt_resolution.md` |
+| **Convergence** re-read | A fresh lensless re-read against the images, as in R2, that leaves R6's and R8's intentional changes alone and classes every change as substantive or minor | none | image | `convergence_pass.md` |
 | **R7** Anchor strip | Remove every page anchor, touching nothing else: the clean reading text | — | byte checks | `anchor_strip.md` |
 
 A single file, `uncertain_readings.md`, runs across all passes. Every doubt is logged there as
-OPEN, and later resolved or documented. **The base is "final" when a complete pass produces no
-substantive diff.** Then it graduates to translation.
+OPEN, and later resolved or documented (the skill also keeps them in a ledger, `run/doubts.jsonl`).
+**The base is "final" when a complete pass produces no substantive diff.** The convergence pass
+is that test: its gate is zero substantive changes. Then the base graduates to translation.
 
 Variants of the pipeline:
 
@@ -218,9 +231,11 @@ Variants of the pipeline:
 
 ### 5.2 How a pass is actually run
 
-Each pass is **one interactive Claude Code session**, started from a written prompt saved as
-`_source/pass<ID>_prompt.md`. Template: `templates/pass_prompt_template.md`. Real ones:
-`examples/pass-prompts/`. The prompt always spells out:
+In the hand-run works, each pass was **one interactive Claude Code session**, started from a
+written prompt saved as `_source/pass<ID>_prompt.md`. Template: `templates/pass_prompt_template.md`.
+Real ones: `examples/pass-prompts/`. (The skill replaces these prompts with its phase files, which
+its subagents read themselves, and checks each phase with a scripted gate.) The prompt always
+spells out:
 
 - what the pass **is and is not**, with neighbouring passes' jobs explicitly excluded;
 - **what to read first**: the README (its conventions override defaults), the previous pass's
@@ -236,7 +251,8 @@ Each pass is **one interactive Claude Code session**, started from a written pro
 
 Inside the session the main loop acts as **orchestrator**. It fans out **one subagent per unit,
 or per contiguous page range**, each writing only its own disjoint files, so they run in parallel
-without conflicts. It de-risks by launching one or two subagents first. Subagents report back by
+without conflicts (the skill dispatches them in waves of at most 6; more ran into rate limits).
+It de-risks by launching one or two subagents first. Subagents report back by
 page number with PASS/FAIL. After they finish, the orchestrator runs the assembler and validator
 **once, centrally**, and spot-checks independently. Collator briefs for the witness passes are in
 `examples/pass-prompts/R1_*` and `R3_*`.
@@ -402,7 +418,7 @@ heads).
 python3 tools/translate.py --config CFG --check        # parse round-trip + mark balance, free
 # trial: prep --units <shortest>, one translate agent, the configure agent reviews it
 python3 tools/translate.py --config CFG prep           # bundles; then one agent per batch of units
-python3 tools/validate.py  --config CFG --structure-only   # the translate gate
+python3 tools/validate.py  --config CFG --structure-only --summary   # the translate gate: GATE validate: PASS
 ```
 
 ---
@@ -493,15 +509,19 @@ scripts: transcripts in `grading_logs_<work>/`).
 
 ---
 
-## 9. Doing a new work: checklist
+## 9. Doing a new work by hand: checklist
+
+The skill does all of this for you. Without it:
 
 1. **Survey and plan.** Copy `templates/source_README_template.md` to
    `<Work>/_source/README.md`. Pick a public-domain base, a secondary witness, and an oracle.
    Write down the conventions.
 2. **Pass 0.** Stage page images, OCR and the page map. Verify boundaries on the images. Drop in
    the oracle PDF.
-3. **Passes A → B → R2 → R4 → R1 → R3 → R5 → R6 → R7.** Run each as a session from a written
-   prompt (`templates/pass_prompt_template.md`). Keep the checker clean after each:
+3. **Passes A → (normalize) → B → R2 → R4 → R1 → R3 → R5 → R6 → R8 → convergence → R7.** Run
+   each as a session from a written prompt (`templates/pass_prompt_template.md`); the skill's
+   phase files (`.claude/skills/translate-work/phases/`) are detailed briefs for every pass. Keep
+   the checker clean after each:
    ```
    python3 tools/base_check.py LATIN/ --pair »« --forbid '[Jj]' --anchor '\[GCS p\.(\d+)\]' \
        --section '(?m)^(?:\[GCS p\.\d+\] ?)?(\d+)\.\s' \

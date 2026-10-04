@@ -16,8 +16,8 @@ establishing the source text in logged passes, then translating, validating and 
 - `tools/`: a symlink to the skill's tools. That's the config-driven `translate.py`,
   `validate.py` and `grade.py` (bundles for the skill's per-unit subagents, and checks of what
   they write; they never call a model), the source-text helpers (`base_check.py`,
-  `strip_anchors.py`, …), and the run bookkeeping. Needs Python 3; staging and grading also need
-  poppler and OpenJPEG.
+  `strip_anchors.py`, …), and the run bookkeeping. Needs Python 3 with Pillow; staging also needs
+  poppler and OpenJPEG, and grading needs poppler.
 - `.claude/settings.json`: pins the model (the orchestrator on `claude-opus-5-5[1m]`, every
   subagent on `claude-opus-5-5`).
 - `examples/`: configs, the original per-work scripts, and real pass prompts and reports.

@@ -41,12 +41,14 @@ translate-work/
 │   │    13_translate.md, 14a_validate_scan.md, 15a_grade_scan.md: per unit, in batches)
 ├── tools/              deterministic helpers (Python 3 + Pillow; poppler, OpenJPEG)
 │   ├── state.py  status_check.py  decisions.py  merge_notes.py        run bookkeeping
+│   ├── context_check.py                       the orchestrator's context budget (pause and resume)
 │   ├── packets.py  checklist.py  doubts.py            sub-packets, completeness checklists, doubt ledger
 │   ├── archive_item.py  pdf_pages.py  crop.py                         staging + image reading
 │   ├── manifest_check.py  check_base.py  base_check.py  strip_anchors.py   source-text gates
 │   ├── normalize_check.py  manifest_edit.py   normalize gate; locked incipit/explicit sync
 │   ├── translate.py  validate.py  grade.py   bundles for the per-unit agents + checks of their output
 │   ├── common.py  skill_config_base.py  work_config_template.py
+│   ├── gate.py                                the GATE <tool>: PASS|FAIL line every gate prints
 │   └── scratch_copy.py                        a test copy of a run that can't touch the original
 └── templates/          source README template
 ```
