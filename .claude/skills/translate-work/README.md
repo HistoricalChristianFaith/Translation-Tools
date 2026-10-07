@@ -26,6 +26,8 @@ themselves, fixed output files, waves of at most 6 agents, and checklist gates.
 7. The run proceeds on its own through the phases. It stops only for batched editorial
    decisions (by autonomy level) or when blocked. It prints one progress line per phase.
 8. **Result:** `<work>/english/<unit>_english.txt`, plus `_source/run/FINAL_REPORT.md`.
+   To publish the English as a Writings-Database page, run `/format-as-html <work folder>`
+   ([`../format-as-html/SKILL.md`](../format-as-html/SKILL.md)).
 
 A run takes hours to days. Re-run `/translate-work <work folder>` in a new session to resume.
 

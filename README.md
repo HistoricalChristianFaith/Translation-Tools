@@ -8,11 +8,17 @@ validated plain-text English translation, one file per unit.
 then orchestrates the whole process with subagents. See
 [`.claude/skills/translate-work/README.md`](.claude/skills/translate-work/README.md).
 
+**To publish it:** type `/format-as-html <work folder>`. It asks where the page goes, renders the
+English as a Writings-Database HTML fragment, and proves the page holds exactly the English text
+before writing. See [`.claude/skills/format-as-html/SKILL.md`](.claude/skills/format-as-html/SKILL.md).
+
 **To understand it:** read [`TRANSLATION_PROCESS.md`](TRANSLATION_PROCESS.md). It covers
 establishing the source text in logged passes, then translating, validating and grading.
 
 - `.claude/skills/translate-work/`: the skill (orchestrator `SKILL.md`, `phases/`, `tools/`,
   `templates/`).
+- `.claude/skills/format-as-html/`: the publishing skill (`SKILL.md`, `tools/`, a config template,
+  tests; design record in `SPEC.md`). Each work keeps its settings in `<work>/html_config.py`.
 - `tools/`: a symlink to the skill's tools. That's the config-driven `translate.py`,
   `validate.py` and `grade.py` (bundles for the skill's per-unit subagents, and checks of what
   they write; they never call a model), the source-text helpers (`base_check.py`,

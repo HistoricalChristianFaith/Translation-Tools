@@ -19,7 +19,8 @@ The goal is for someone else to be able to repeat it on a new work. The short ve
 > **First build a verified source-language text from the printed page images, in many small,
 > logged, independently checked passes. Then translate it one unit per LLM call inside
 > deterministic scaffolding. Validate the English against that source. Grade it against a published
-> translation.** The end product is one plain-text English file per unit.
+> translation.** The end product is one plain-text English file per unit. The `/format-as-html`
+> skill then publishes those files as one HTML page in the Writings-Database repo.
 
 Most of the effort, and most of the quality, is in the first half. The translation step is almost
 the easy part.
@@ -36,6 +37,7 @@ the easy part.
 |---|---|
 | `TRANSLATION_PROCESS.md` | This document |
 | `.claude/skills/translate-work/` | The `/translate-work` skill: orchestrator, phase files, tools |
+| `.claude/skills/format-as-html/` | The `/format-as-html` skill: renders a finished work's English as a Writings-Database HTML fragment, from a per-work `html_config.py`, with fidelity and house-format checks |
 | `tools/` | (symlink into the skill) Generic, config-driven tools: `translate.py`, `validate.py`, `grade.py` (they prepare the bundles the skill's translate / validate / grade subagents work from, and check what those agents write; they never call a model), plus base-text helpers `base_check.py` and `strip_anchors.py` |
 | `tools/work_config_template.py` | Commented template for a new work's config |
 | `examples/configs/` | Configs of the Leviticus and 1 Corinthians runs (settings reference for `tools/`) |
