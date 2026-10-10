@@ -206,7 +206,7 @@ and convergence afterwards.
 | **B** Image transcription | Transcribe every unit directly from the page images, with `[p.N]` anchors at every page or column turn | — | image | `passB_report.md` |
 | **R2** Lensless re-collation | A fresh reader re-reads *everything* word for word against the images, with no other witness open | none | image | `recollation_pass.md` |
 | **R4** Boundary & completeness | Every unit's start and end, shared pages, seams, every page anchored once, section numerals | (oracle as tripwire only) | image | `r4_boundary_audit.md` |
-| **R1** Secondary-witness cross-check | Collate against an independent edition; every divergence is a signal | Migne / Lommatzsch / Cramer | image | `variants_<witness>.md` |
+| **R1** Secondary-witness cross-check | Collate against an independent edition; every divergence is a signal. Sampled by default: a tenth of the packets first, the rest only if they find something | Migne / Lommatzsch / Cramer | image | `variants_<witness>.md` |
 | **R3** Oracle back-check | Sentence by sentence against the English oracle, looking for meaning-level slips | oracle translation | image | `oracle_discrepancies.md` |
 | **R5** Consistency & conventions | Single-editor uniformity: orthography as printed, marks, anchors, lemma per unit, embedded Greek; build the unit → passage table | — | image | `consistency_pass.md` |
 | **R6** Apparatus / variant pass | A narrow pass over the residual cruxes: emend or record | apparatus, witness, corpus | image + evidence | `apparatus_pass.md` |
@@ -309,6 +309,13 @@ Techniques that mattered:
   wrongly concluded the homily was truncated.
 - **R1** mostly confirms, and has zero edits on a clean base. Base errors hide at **cut or faded
   margins**, and that is where the second witness earns its keep. Log every variant for R6.
+  Its value varies by work: on the Jerome commentaries, the corrections R1 was first to flag
+  ranged from 0 (*Isaiah*, 346 pages; *Philemon*) through 2 (*Galatians*, *Titus*) and 4 (*Joel*)
+  to 32 (*Ezekiel*, 770 pages), and a full R1 costs roughly 17k tokens per base page. Hence the
+  default **sampled** mode: R1 collates ~10% of the packets (the most doubt-dense one plus
+  evenly spaced ones), then the rest only if the sample finds 2+ new things (1: a second
+  sample). Replayed on those runs it continues on *Ezekiel*, *Titus* and *Joel* and stops on
+  *Isaiah* and *Philemon*; on *Galatians* it stops and would have missed 2 corrections.
 - **R3.** The oracle is a detector, never an authority: correct the base toward *its own
   witness*, never toward the English. Expect loose tracking where the ancient translator took
   liberties (Rufinus on Leviticus). An oracle's "extras" are often **a different critical

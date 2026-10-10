@@ -5,6 +5,11 @@ e.g. Migne against a GCS base, Lommatzsch against Migne, Cramer's *Catenae* agai
 edition). Every divergence is a **signal**. **Every decision is made on the BASE page image.**
 The witness is never the authority.
 
+In a **sampled** run (`state.json` → `witness_mode` = `sampled`) you may be one of a few packets
+collated first, and what you report decides whether the rest of the work gets this pass. Work
+exactly as in a full run; just record your findings as the Output section says, so they can be
+counted.
+
 Inputs:
 - your units;
 - the base images;
@@ -29,6 +34,11 @@ Inputs:
 ## Output
 
 Notes `${RUN_DIR}/notes/R1/<packet>.md` with the standard sections **plus** `## Variants` (a
-bulleted list; can be long). Put probable misprints of the base edition under `## Carry-forward`
-tagged `[R6]` as well. Status `${RUN_DIR}/status/R1/<packet>.json` (`fixes` = base slips fixed).
+bulleted list; can be long). Enter every **probable misprint of the base edition** (the
+print is wrong, our text faithfully copies it) in the doubt ledger with `doubts.py add`
+(`status_contract.md` §2a; question `probable misprint; witness reads <Y>`), unless the ledger
+already has a doubt on that word (then update it instead), and list it under `## Carry-forward`
+tagged `[R6]` as well. Editorial variants stay in `## Variants` only. Status
+`${RUN_DIR}/status/R1/<packet>.json`: `fixes` = base slips fixed, `doubts` = ledger entries you
+added. These two numbers are the pass's **new findings**, what a sampled run decides on.
 Edit only your packet's units.

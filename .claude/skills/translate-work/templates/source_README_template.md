@@ -44,7 +44,7 @@ further full pass yields no substantive change. **Translation is a later project
 ### Witnesses, in priority order
 1. **{Base edition}** ({year}, public domain): the primary text.
 2. **{Base} page images**: the ground truth for every correction.
-3. **{Secondary witness}** ({Migne / Lommatzsch / Cramer / …}, PD): independent editorial line, used at R1.
+3. **{Secondary witness}** ({Migne / Lommatzsch / Cramer / …}, PD): independent editorial line, used at R1 ({sampled / full}).
 4. **English oracle**: {Translator, *Title* (Series, Year)}, **copyright: consult, never copy.**
    Staged as `oracle/oracle.pdf` (git-ignored). Used at R3 (and for grading the English later).
 5. {Extra apparatus / notes (PD) for R6, if any.}
@@ -60,7 +60,7 @@ further full pass yields no substantive change. **Translation is a later project
   witness. Run right after B, while every divergence is still a real slip.
 - **R4 — Boundary & completeness audit:** every unit's start and end, every shared page and seam,
   every page anchored once, the section sequence.
-- **R1 — {Secondary witness} cross-check:** every divergence is a signal, adjudicated on the base image.
+- **R1 — {Secondary witness} cross-check** ({sampled: a sample of packets first, the rest only if it finds something / full}): every divergence is a signal, adjudicated on the base image.
 - **R3 — Oracle back-check:** sentence by sentence against the English oracle, used as a detector,
   never as an authority. Adjudicate on the image.
 - **R5 — Consistency & conventions:** single-editor uniformity (orthography as printed, marks,

@@ -240,13 +240,13 @@ Any unchecked box means the phase is not done.
 | # | Phase (state key) | Phase file | Dispatch | Report (`_source/…`) | Gate |
 |---|---|---|---|---|---|
 | 0 | `survey` | `00_interview.md` → `01_survey.md` | interview + 1 survey agent (`--expect survey`) | `run/survey_notes.md` | `survey.json` exists; plan approved |
-| 1 | `stage` | `02_stage.md` | role `base` (+ role `witness` in parallel, if a witness was chosen) (`--expect base [--expect witness]`) | `run/stage_notes.md` (the agent writes `pass0_report.md` itself) | statuses done; `run/stage_base.json` exists |
+| 1 | `stage` | `02_stage.md` | role `base` (+ role `witness` in parallel, if a witness was chosen, i.e. `witness_mode` isn't `none`) (`--expect base [--expect witness]`) | `run/stage_notes.md` (the agent writes `pass0_report.md` itself) | statuses done; `run/stage_base.json` exists |
 | 2 | `structure` | `03_structure.md` | role `assemble` alone (`--expect assemble`), or first `scout-<from>-<to>` agents on ~40-page ranges (`--expect scout-<from>-<to>` each), then `assemble` | `run/structure_notes.md` (the agent writes `boundary_audit.md` itself) | `T/manifest_check.py W` → `GATE manifest_check: PASS` |
 | 2b | `normalize` | `03b_normalize.md` | one agent, role `normalize` (skip if `stage_base.json` → `ocr` isn't `usable-draft`) | `run/normalize_notes.md` | see below |
 | 3 | `B` | `04_transcribe.md` | per packet | `passB_report.md` | standard |
 | 4 | `R2` | `05_recollate.md` | per packet, **fresh agents** | `recollation_pass.md` | standard |
 | 5 | `R4` | `06_boundaries.md` | per packet, then **one** `seams` agent in a final wave | `r4_boundary_audit.md` | standard, with `--with-packets --expect seams` (one call checks every packet **and** the seams role; `--expect` alone checks only the role) |
-| 6 | `R1` | `07_witness.md` | per packet (skip the phase if no witness) | `variants_witness.md` | standard |
+| 6 | `R1` | `07_witness.md` | per packet: every packet (`full`), or a sample first and the rest only if it finds something (`sampled`); skip if no witness (see *R1*) | `variants_witness.md` | standard |
 | 7 | `R3` | `08_oracle.md` | per packet (skip the phase if no oracle) | `oracle_discrepancies.md` | standard |
 | 8 | `R5` | `09_consistency.md` | one agent, role `corpus` | `consistency_pass.md` | standard (`--expect corpus`) |
 | 9 | `R6` | `10_variants.md` | one agent, role `docket`, after `T/checklist.py init W --phase R6 --role docket --by none --all-open-doubts` | `apparatus_pass.md` | standard (`--expect docket --require-checklist`) |
@@ -291,6 +291,49 @@ are re-read. Convergence proves stability. R7 strips anchors last.
 5. `T/state.py set W b_mode=<normalize.json b_mode>` (tell the user in the progress line if it
    differs from the plan), `T/state.py phase W normalize done`. B's `pre-B` snapshot now holds
    the normalized seed, so `diff -r snapshots/pre-B snapshots/pre-R2` is exactly B's work.
+
+### R1: secondary-witness collation (phase 6)
+
+`state.json` → `witness_mode`, chosen at the interview (older runs: `full` if `witness` is set,
+else `none`):
+- `none`: `T/state.py phase W R1 skipped --note "no witness"`.
+- `full`: the standard per-packet procedure on every packet.
+- `sampled` (the default): collate a sample of packets first, and the rest only if the sample
+  finds what the earlier passes missed. On past runs R1's value ranged from nothing (*Isaiah*,
+  346 pages: no correction that R1 alone had flagged) to a lot (*Ezekiel*, 770 pages: 32), and a
+  10% sample told the two apart. Not every case: on *Galatians* the sample found nothing and the
+  rule would have skipped 2 corrections R1 had flagged first.
+
+**Sampled procedure.** The standard procedure applies to each dispatch; only the packet list
+changes. Threshold: `T/state.py get W r1_continue_at` (`null` = 2).
+1. `T/state.py phase W R1 in_progress`, `T/state.py snapshot W pre-R1`, clear
+   `${RUN_DIR}/assignments/R1/`. `T/packets.py sample W` prints the sample (about 10% of the
+   packets, at least 2: the packet whose pages drew the most B/R2/R4 doubts per page, likely
+   damaged print, plus packets spread evenly through the work) on stdout, and a summary line on
+   stderr. `T/state.py set W r1_sample=<the ids> r1_step=sample`.
+2. Collate the sample: `T/checklist.py init W --phase R1 --ids <sample> --doubts`, dispatch
+   `T/packets.py ids W --ids <sample>` in waves, then
+   `T/status_check.py W --phase R1 --packets <sample>` must print `GATE status_check: PASS`
+   (retry rules as usual).
+3. **New findings** `n` = `fixes` + `doubts` on that status line (base slips R1 fixed, and
+   misprints it entered in the ledger that no earlier pass had raised; `07_witness.md`).
+   `T/state.py set W r1_new=<n>`.
+   - `n` ≥ threshold: collate the rest. `T/packets.py sample W --exclude <sample> --fraction 1`
+     prints every remaining packet; `T/state.py set W r1_step=rest r1_rest=<them>`; step 2 on
+     them.
+   - `n` = threshold − 1 and no second sample yet: `T/packets.py sample W --exclude <sample>`
+     gives a second sample; `T/state.py set W r1_sample=<both lists> r1_step=sample2`; step 2 on
+     it; recount `n` over both samples and decide again (a second sample never leads to a third).
+   - otherwise: stop. The remaining packets are not collated.
+4. Merge, gate and decisions as standard (step 4–6), with `--packets` = every packet collated.
+   `T/state.py set W r1_step=done`, then
+   `T/state.py phase W R1 done --note "sampled: <k> of <N> packets, <n> new findings; rest collated|rest skipped"`.
+   Progress line, e.g. `✓ R1 (sampled): 5/49 packets, 4 new findings → rest collated (49/49).`
+   or `✓ R1 (sampled): 2/18 packets, 0 new findings → rest skipped.`
+
+In a sampled run that stops, the packets not collated have no R1 status: that is the design, not
+a failure. The dispatch checklist's "every packet" means every packet on the lists you
+dispatched, and every later `status_check.py --phase R1` takes `--packets <r1_sample[,r1_rest]>`.
 
 ### R8: doubt resolution (phase 9b)
 
@@ -557,6 +600,8 @@ The interview detects `${RUN_DIR}/state.json` and offers to resume. On resume:
    (*Orchestrator items*).
 3. For a per-packet phase that was `in_progress`, run `status_check.py` first and dispatch only
    the `REDISPATCH:` ids (re-init only their checklists, except in B).
+   `R1` `in_progress` in a `sampled` run: `T/state.py get W r1_step` (`sample`, `sample2`, `rest`)
+   and `r1_sample` / `r1_rest` say which list is in progress; continue *R1* at that step.
 4. `configure` `in_progress`: `T/state.py get W configure_trial` says where the trial stands
    (`null`: the configure agent's own step; `<i>`: step 2 of iteration `i`; `<i>-review`: step 3;
    `done`: the gate). `translate` `in_progress`: run *Translate* again from step 2 (`prep` skips

@@ -152,9 +152,21 @@ Record: `T/state.py set W base=<short citation> base_id=<id> base_source=archive
 ## Step 6: Secondary witness
 
 If the survey recommends a downloadable public-domain witness (another edition of the same text:
-Migne, Lommatzsch, Cramer, …), include it in the plan by default and let the user remove it at
-Step 8. If none exists, `R1` will be skipped. The user can also drop one into
-`_source/incoming/witness/`.
+Migne, Lommatzsch, Cramer, …), or the user dropped one into `_source/incoming/witness/`, ask how to
+use it (header "Witness"): "How should R1 use the secondary witness (<witness citation>)?"
+- **Sampled (Recommended):** "R1 collates about a tenth of the packets first (including the
+  pages with the most doubts so far), and the rest only if that sample finds misprints or slips
+  the earlier passes missed. Typically ~<10% of the full cost> when the sample finds nothing."
+- **Full:** "R1 collates every packet against the witness: ~<full cost> for this work."
+- **No witness:** "Skip R1; the witness isn't staged."
+
+Estimate the full cost from the base's page count in `survey.json`: about 17k tokens per base page
+(measured on one run; say "rough"). Record:
+```
+T/state.py set W witness_mode=<sampled|full|none> witness=<citation|null>
+```
+(`none`: `witness=null`.) If no witness exists, don't ask: `witness_mode=none witness=null`, and `R1`
+will be skipped. The plan (Step 8) shows the choice; the user can still change it there.
 
 ## Step 7: Oracle
 
@@ -184,6 +196,7 @@ Estimate the agent count:
 packets ≈ max(1, units)   when units ≤ 25, else ≈ pages / 10
 agents  ≈ 1 (survey) + 2 (stage) + 1-5 (structure)
         + packets × (B + R2 + R4 + R1? + R3? + convergence ≈ 1.5 rounds)
+          (R1: every packet if full; if sampled, ~0.1-0.2 × packets when the sample finds nothing)
         + 1 (normalize, if a text layer) + 1 (seams) + 1 (R5) + 1 (R6) + 1-3 (R8) + 1 (configure)
         + batches × (1 translate + 2 validate scans + 1 if oracle) (full per-unit phases)
         + ≈ batches × 1.5 (later rounds' scans, on changed sets)
@@ -196,7 +209,7 @@ Use the unit and page counts from the survey.
 Show a plan of at most 15 lines:
 - the work;
 - the base (and how it is obtained);
-- the witness;
+- the witness and how R1 uses it (`sampled` / `full`), with the rough cost of each;
 - the oracle;
 - the expected language directory;
 - the passes that will run and which are skipped: `normalize` runs if the base has a text layer
@@ -214,7 +227,8 @@ Show a plan of at most 15 lines:
 
 Then **one** `AskUserQuestion` call with these questions:
 1. (header "Plan") "Approve this plan?" [Approve (Recommended) / Remove the secondary witness /
-   Abort]
+   Abort]. Remove: `T/state.py set W witness_mode=none witness=null`. A change of R1 mode through
+   "Other" (e.g. "full witness"): `T/state.py set W witness_mode=full`.
 2. (header "Autonomy") "How often should I stop for you?"
    - Checkpoints: decisions batched between phases (Recommended)
    - Guided: also after staging, variants, configure and before the report
@@ -232,7 +246,7 @@ then `T/decisions.py resolve W --id <printed id> --choice "<label>"`.
 
 Record everything:
 ```
-T/state.py set W autonomy=<checkpoints|guided|autonomous> translate_images=<true|false> auto_commit=<true|false> witness=<citation|null>
+T/state.py set W autonomy=<checkpoints|guided|autonomous> translate_images=<true|false> auto_commit=<true|false>
 ```
 If the user asked to change something (via "Other"), adjust and show the plan again.
 

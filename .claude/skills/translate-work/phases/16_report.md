@@ -11,6 +11,10 @@ the translation later. Base it only on files, never on guesses. Collect numbers 
   `list --status open|deferred|escalated`, `list --phase R8`), if the run has a doubt ledger
   (`run/doubts.jsonl`); `doubt_resolution.md` (R8);
 - `${RUN_DIR}/normalize/normalize.json`, if the normalize phase ran;
+- R1: `state.py get … witness_mode`, `r1_sample`, `r1_new`, `r1_step`, and the phase note (in a
+  sampled run: which packets were collated, the new findings, whether the rest was collated;
+  run its `status_check.py --phase R1` with `--packets <r1_sample[,r1_rest]>`, since packets
+  never collated have no status by design);
 - `${RUN_DIR}/manifest_edits.jsonl` (incipit / explicit synced to the text: unit, field, old → new,
   by whom, why), if it exists;
 - `python3 ${TOOLS_DIR}/merge_notes.py --work-dir ${WORK_DIR} --pending` (`[orchestrator]` items
@@ -39,6 +43,7 @@ the translation later. Base it only on files, never on guesses. Collect numbers 
 ## Summary
 - Result: <N> units translated → `<WORK_DIR>/english/` (one file per unit)
 - Base text: <edition>, <pages>; <K> source-text passes; converged: yes | no (<packets>)
+- Witness (R1): <witness>, full | sampled: <k> of <N> packets, <n> new findings, rest collated | rest skipped | none
 - Fidelity (validator, vs our source): mean <first-round score> → <last-round score>/100 over <r> rounds; <n> significant findings open
 - Sense vs oracle (<oracle>): mean <first> → <last>/100 over <m> graded units, <r> rounds | no oracle
 - Review rounds: <per round: key, packets, fixes, substantive>; not settled: <packets> | none

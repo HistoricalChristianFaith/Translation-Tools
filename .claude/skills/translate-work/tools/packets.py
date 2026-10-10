@@ -21,6 +21,9 @@ complete only when all its sub-packets are; status_check.py and merge_notes.py h
     packets.py list   --work-dir D --ids u12-u17              # a batch line + one line per unit
     packets.py batches --work-dir D --units <list> [--max-units N] [--max-chars C] [--isolate-first]
                                                               # comma list of batch ids (below)
+    packets.py sample --work-dir D [--fraction 0.1] [--min 2] [--exclude p03,p08]
+                                           # R1 sampled mode: comma list of whole packets to
+                                           # collate first (see cmd_sample)
     packets.py placeholders --work-dir D   # Pass B: one placeholder line per sub in split units
     packets.py join   --work-dir D         # Pass B: remove `[[JOIN]]` seams left by sub agents
                                            # (a gate: ends with `GATE join: PASS|FAIL`)
@@ -294,6 +297,45 @@ def unit_packet(run):
     return {n: p["id"] for p in load(run)["packets"] for n in p.get("units", [])}
 
 
+def cmd_sample(a, run):
+    """R1 sampled mode: pick whole packets to collate first. The packet whose pages drew the most
+    ledger doubts per page from the image passes (B, R2, R4) comes first, as the likeliest place
+    for damaged print; the rest are spread evenly through the work, so the sample sees every part
+    of it. Deterministic, so a resumed run picks the same packets."""
+    packets = load(run)["packets"]
+    exclude = set(a.exclude.split(",")) if a.exclude else set()
+    pool = [p for p in packets if p["id"] not in exclude]
+    k = min(len(pool), max(a.min, math.ceil(a.fraction * len(packets))))
+    if not k:
+        print("")
+        return
+    import doubts  # noqa: PLC0415
+    items, order = doubts.load(os.path.dirname(os.path.dirname(run)))
+    up = unit_packet(run)
+    per = {}
+    for i in order:
+        d = items[i]
+        if d.get("phase") in ("B", "R2", "R4") and d.get("unit") in up:
+            per[up[d["unit"]]] = per.get(up[d["unit"]], 0) + 1
+    density = {p["id"]: per.get(p["id"], 0) / max(1, len(p.get("pages", []))) for p in pool}
+    chosen = []
+    worst = max(pool, key=lambda p: density[p["id"]])
+    if density[worst["id"]] > 0:
+        chosen.append(worst["id"])
+    rest = [p["id"] for p in pool if p["id"] not in chosen]
+    need = k - len(chosen)
+    if need > 0:
+        step = len(rest) / need
+        chosen += [rest[min(len(rest) - 1, int((i + 0.5) * step))] for i in range(need)]
+    order_ix = {p["id"]: i for i, p in enumerate(packets)}
+    chosen = sorted(set(chosen), key=order_ix.get)
+    print(",".join(chosen))
+    pages = sum(len(p.get("pages", [])) for p in packets if p["id"] in chosen)
+    note = f"; {worst['id']} has the most image-pass doubts per page" if density[worst["id"]] > 0 else ""
+    print(f"sample: {len(chosen)} of {len(packets)} packets ({len(pool)} not yet collated), {pages} pages{note}",
+          file=sys.stderr)
+
+
 def cmd_uids(a, run):
     if a.units:
         ns = parse_unit_list(a.units)
@@ -380,7 +422,7 @@ def cmd_join(a, run):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["split", "list", "ids", "units", "uids", "batches", "placeholders", "join"])
+    ap.add_argument("cmd", choices=["split", "list", "ids", "units", "uids", "batches", "sample", "placeholders", "join"])
     ap.add_argument("--work-dir", required=True)
     ap.add_argument("--max-pages", type=int, default=12)
     ap.add_argument("--packet")
@@ -392,6 +434,9 @@ def main():
     ap.add_argument("--max-chars", type=int, help="batches: source bytes per batch (default state batch_chars, else 30000)")
     ap.add_argument("--isolate-first", action="store_true",
                     help="batches: the first unit of every run of consecutive units goes alone (re-dispatch)")
+    ap.add_argument("--fraction", type=float, default=0.1, help="sample: share of all packets (default 0.1)")
+    ap.add_argument("--min", type=int, default=2, help="sample: at least this many packets (default 2)")
+    ap.add_argument("--exclude", help="sample: packets already collated (a second sample)")
     a = ap.parse_args()
     run = run_dir(a.work_dir)
     if a.cmd == "join":
@@ -410,6 +455,8 @@ def main():
         cmd_uids(a, run)
     elif a.cmd == "batches":
         cmd_batches(a, run)
+    elif a.cmd == "sample":
+        cmd_sample(a, run)
     elif a.cmd == "placeholders":
         cmd_placeholders(a, run)
     elif a.cmd == "join":
