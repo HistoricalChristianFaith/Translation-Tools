@@ -91,8 +91,9 @@ cp -R .claude/skills/translate-work ~/.claude/skills/
 (The skill's `tools/` is its real home; the repository's top-level `tools` is a symlink to it.)
 
 Requirements:
-- Claude Code, with the model pin in the project's `.claude/settings.json` (the orchestrator on
-  `claude-opus-5-5[1m]`, every subagent on `claude-opus-5-5`; SKILL.md Step 0 checks it). Installed
+- Claude Code, with the model pin in the project's `.claude/settings.json` (the orchestrator and
+  every subagent on `claude-opus-5-5`, which has the 1M context window by default; SKILL.md
+  Step 0 checks it, and that `CLAUDE_CODE_DISABLE_1M_CONTEXT` is unset). Installed
   under `~/.claude/skills/`, put the pin in `~/.claude/settings.json`;
 - Python 3 with Pillow;
 - `brew install poppler openjpeg tesseract tesseract-lang` (tesseract is optional).

@@ -35,7 +35,7 @@ import sys
 PHASES = ["survey", "stage", "structure", "normalize", "B", "R2", "R4", "R1", "R3", "R5", "R6",
           "R8", "convergence", "R7", "configure", "translate", "validate", "grade", "report"]
 # The model every subagent and the orchestrator run on (SPEC §8.4). Compared without a context
-# suffix: `claude-opus-5-5[1m]` (the orchestrator, 1M context) matches.
+# suffix, so an older pin's `claude-opus-5-5[1m]` matches (Opus 5.5 has the 1M window by default).
 PINNED_MODEL = "claude-opus-5-5"
 REACHED = ("in_progress", "done", "failed")  # a phase with one of these was actually run
 RUN_SUBDIRS = ["status", "notes", "snapshots", "logs", "crops"]

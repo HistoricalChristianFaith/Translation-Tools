@@ -24,8 +24,8 @@ establishing the source text in logged passes, then translating, validating and 
   they write; they never call a model), the source-text helpers (`base_check.py`,
   `strip_anchors.py`, …), and the run bookkeeping. Needs Python 3 with Pillow; staging also needs
   poppler and OpenJPEG, and grading needs poppler.
-- `.claude/settings.json`: pins the model (the orchestrator on `claude-opus-5-5[1m]`, every
-  subagent on `claude-opus-5-5`).
+- `.claude/settings.json`: pins the model (the orchestrator and every subagent on
+  `claude-opus-5-5`, with its default 1M context window).
 - `examples/`: configs, the original per-work scripts, and real pass prompts and reports.
 - `templates/`: skeletons for a new work's workspace README and pass prompts (for running passes
   by hand).

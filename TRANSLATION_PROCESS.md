@@ -136,8 +136,8 @@ LEMMA: [Ἡμεῖς δὲ οὐ τὸ πνεῦμα τοῦ κόσμου ἐλ�
   base-text passes, and translate, validate and grade too, one subagent per unit between two
   deterministic tool steps (prepare a self-contained bundle; check the file the agent wrote).
   No headless `claude -p` call and no `--dangerously-skip-permissions`. The model is pinned to
-  Opus 5.5 in the project settings (the orchestrator on `claude-opus-5-5[1m]`, every subagent on
-  `claude-opus-5-5`). The per-work scripts in `examples/original-scripts/` ran these phases
+  Opus 5.5 in the project settings (the orchestrator and every subagent on `claude-opus-5-5`,
+  with its default 1M context window). The per-work scripts in `examples/original-scripts/` ran these phases
   headlessly, one `claude -p` call per unit; that is the method described in §§6–8, which the
   skill keeps.
 - Python 3 with Pillow (crops, image conversion).
