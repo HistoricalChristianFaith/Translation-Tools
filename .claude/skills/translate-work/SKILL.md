@@ -14,22 +14,29 @@ argument-hint: "[author and work, e.g. 'Origen, Homilies on Numbers'] | [path to
 
 ## MANDATORY FIRST ACTIONS
 
-**Step 0: Model check.** The run is pinned to Opus 5.5: you (the orchestrator) on
-`claude-opus-5-5[1m]` (the 1M context window: your context budget below assumes it), every
-subagent on `claude-opus-5-5`. Check which model you're running as, and that the pin is in the
-settings of the project you run in (`.claude/settings.json` next to the skill's `skills/` folder,
-i.e. `${CLAUDE_SKILL_DIR}/../../settings.json`):
+**Step 0: Model check.** The run is pinned to Opus 5.5: you (the orchestrator) and every
+subagent on `claude-opus-5-5`, so a run that lasts days never changes model midway. Your context
+budget below assumes the 1M context window, which Claude Code gives Opus 4.7 and later **by
+default**: no `[1m]` suffix is needed (it is accepted and changes nothing), and your system prompt
+names the model without one, so a missing suffix is not a smaller window. Only
+`CLAUDE_CODE_DISABLE_1M_CONTEXT` takes the window down to 200K. Check three things, with this one
+Bash command as your only tool call before the check passes:
+`echo "DISABLE_1M=${CLAUDE_CODE_DISABLE_1M_CONTEXT:-unset}"; cat "${CLAUDE_SKILL_DIR}/../../settings.json"`
+1. you're running as `claude-opus-5-5`;
+2. `DISABLE_1M=unset`;
+3. the pin is in the settings of the project you run in (`.claude/settings.json` next to the
+   skill's `skills/` folder, i.e. `${CLAUDE_SKILL_DIR}/../../settings.json`; an older pin with
+   `"model": "claude-opus-5-5[1m]"` passes too):
 ```json
-{"model": "claude-opus-5-5[1m]",
+{"model": "claude-opus-5-5",
  "env": {"ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5", "CLAUDE_CODE_SUBAGENT_MODEL": "claude-opus-5-5"}}
 ```
-If you aren't exactly `claude-opus-5-5[1m]` (plain `claude-opus-5-5` fails too: right model, too
-small a context budget), or the settings are missing, stop before running any tool and tell the
-user:
+If any check fails, stop and tell the user (keep only the bracketed lines that apply):
 
-> ⚠️ /translate-work is pinned to Claude Opus 5.5 with the 1M context window
-> (`claude-opus-5-5[1m]`), and every subagent to `claude-opus-5-5`, so a run that lasts days
-> never changes model midway. [The pin settings are missing: I can add them to
+> ⚠️ /translate-work is pinned to Claude Opus 5.5 (`claude-opus-5-5`) with its 1M context
+> window, for the orchestrator and every subagent, so a run that lasts days never changes model
+> midway. [This session runs as `<model>`.] [`CLAUDE_CODE_DISABLE_1M_CONTEXT` is set, which caps
+> the context at 200K: unset it.] [The pin settings are missing: I can add them to
 > `<settings path>`.] Settings take effect in a new session: then re-run `/translate-work`. Or
 > reply "continue" to proceed as is.
 
